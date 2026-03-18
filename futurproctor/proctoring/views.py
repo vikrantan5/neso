@@ -772,61 +772,86 @@ def get_detected_objects_string(cheating_events):
             detected_objects_set.update(objs)
     return list(detected_objects_set)
 
-### Report view
+### Report view - Enhanced to show ALL exams
 def report_page(request, student_id):
 
     student = get_object_or_404(Student, id=student_id)
 
-    # Try to get data from the NEW exam system first (StudentExamAttempt + Result)
-    from .models import StudentExamAttempt, Result
+    # Get ALL exam attempts from the NEW exam system (StudentExamAttempt + Result)
+    from .models import StudentExamAttempt, Result, StudentAnswer
     
-    latest_attempt = StudentExamAttempt.objects.filter(student=student).order_by('-submitted_at').first()
+    all_attempts = StudentExamAttempt.objects.filter(
+        student=student
+    ).select_related('exam_paper').order_by('-submitted_at')
     
-    # Initialize exam data variables
-    exam_name = "Not Available"
-    total_questions = 0
-    correct_answers = 0
-    percentage_score = 0
+    # Build detailed exam history
+    exam_history = []
     
-    if latest_attempt:
-        # NEW SYSTEM: Use data from StudentExamAttempt and Result
-        exam_name = latest_attempt.exam_paper.title
-        
+    for attempt in all_attempts:
         # Get total questions from the exam paper
-        total_questions = latest_attempt.exam_paper.questions.count()
+        total_questions = attempt.exam_paper.questions.count()
         
         # Get correct MCQ answers count
-        from .models import StudentAnswer
         correct_answers = StudentAnswer.objects.filter(
-            attempt=latest_attempt,
+            attempt=attempt,
             is_correct=True
         ).count()
         
-        # Get percentage from attempt or result
+        # Get percentage and grade from attempt or result
+        percentage_score = 0
+        grade = 'N/A'
+        result_published = False
+        
         try:
-            result = Result.objects.get(attempt=latest_attempt)
+            result = Result.objects.get(attempt=attempt)
             percentage_score = result.percentage
+            grade = result.grade
+            result_published = result.published
         except Result.DoesNotExist:
-            percentage_score = latest_attempt.percentage if latest_attempt.percentage else 0
-    else:
-        # OLD SYSTEM: Fallback to old Exam model
-        exam = Exam.objects.filter(student=student).order_by('-timestamp').first()
-        if exam:
-            exam_name = exam.exam_name
-            total_questions = exam.total_questions if exam.total_questions else 0
-            correct_answers = exam.correct_answers if exam.correct_answers else 0
-            percentage_score = exam.percentage_score if exam.percentage_score else 0
-
-    # Create a mock exam object to pass to template (for backward compatibility)
-    class ExamData:
-        pass
+            percentage_score = attempt.percentage if attempt.percentage else 0
+        
+        exam_history.append({
+            'exam_name': attempt.exam_paper.title,
+            'subject': attempt.exam_paper.subject,
+            'exam_date': attempt.exam_paper.exam_date,
+            'submitted_at': attempt.submitted_at,
+            'total_questions': total_questions,
+            'correct_answers': correct_answers,
+            'total_marks': attempt.exam_paper.total_marks,
+            'marks_obtained': attempt.total_marks_obtained or 0,
+            'percentage_score': percentage_score,
+            'grade': grade,
+            'status': attempt.status,
+            'result_published': result_published,
+            'duration_minutes': attempt.exam_paper.duration_minutes,
+        })
     
-    exam_obj = ExamData()
-    exam_obj.exam_name = exam_name
-    exam_obj.total_questions = total_questions
-    exam_obj.correct_answers = correct_answers
-    exam_obj.percentage_score = percentage_score
+    # OLD SYSTEM: Fallback to old Exam model if no new attempts
+    if not exam_history:
+        old_exams = Exam.objects.filter(student=student).order_by('-timestamp')
+        for exam in old_exams:
+            exam_history.append({
+                'exam_name': exam.exam_name,
+                'subject': 'N/A',
+                'exam_date': exam.timestamp,
+                'submitted_at': exam.timestamp,
+                'total_questions': exam.total_questions if exam.total_questions else 0,
+                'correct_answers': exam.correct_answers if exam.correct_answers else 0,
+                'total_marks': exam.total_questions if exam.total_questions else 0,
+                'marks_obtained': exam.correct_answers if exam.correct_answers else 0,
+                'percentage_score': exam.percentage_score if exam.percentage_score else 0,
+                'grade': 'N/A',
+                'status': exam.status,
+                'result_published': True,
+                'duration_minutes': 'N/A',
+            })
 
+    # Calculate overall statistics
+    total_exams_taken = len(exam_history)
+    total_exams_passed = sum(1 for exam in exam_history if exam['percentage_score'] >= 40)
+    average_score = sum(exam['percentage_score'] for exam in exam_history) / total_exams_taken if total_exams_taken > 0 else 0
+
+    # Get cheating events and data
     cheating_events = CheatingEvent.objects.filter(student=student)
 
     detected_objects_list = get_detected_objects_string(cheating_events)
@@ -847,28 +872,24 @@ def report_page(request, student_id):
     cheating_audios = CheatingAudio.objects.filter(event__student=student)
     audio_urls = [audio.audio.url for audio in cheating_audios if audio.audio]
 
-
     context = {
         'student': student,
-        'exam': exam_obj,
-
-        'correct_answers': correct_answers,
-        'total_questions': total_questions,
-
+        'exam_history': exam_history,
+        'total_exams_taken': total_exams_taken,
+        'total_exams_passed': total_exams_passed,
+        'average_score': round(average_score, 2),
         'detected_objects': detected_objects_str,
         'total_tab_switch_count': total_tab_switch_count,
         'cheating_status': any(
             event.event_type in ['object_detected', 'multiple_persons', 'tab_switch']
             for event in cheating_events
         ),
-
         'cheating_images': cheating_images_data,
         'audio_urls': audio_urls,
         'cheating_events': cheating_events
     }
 
     return render(request, 'report_page.html', context)
-
 
 
 from django.template.loader import get_template
@@ -884,55 +905,79 @@ def download_report(request, student_id):
     # Get student
     student = get_object_or_404(Student, id=student_id)
 
-    # Try to get data from the NEW exam system first (StudentExamAttempt + Result)
-    from .models import StudentExamAttempt, Result
+    # Get ALL exam attempts from the NEW exam system (StudentExamAttempt + Result)
+    from .models import StudentExamAttempt, Result, StudentAnswer
     
-    latest_attempt = StudentExamAttempt.objects.filter(student=student).order_by('-submitted_at').first()
+    all_attempts = StudentExamAttempt.objects.filter(
+        student=student
+    ).select_related('exam_paper').order_by('-submitted_at')
     
-    # Initialize exam data variables
-    exam_name = "Not Available"
-    total_questions = 0
-    correct_answers = 0
-    percentage_score = 0
+    # Build detailed exam history
+    exam_history = []
     
-    if latest_attempt:
-        # NEW SYSTEM: Use data from StudentExamAttempt and Result
-        exam_name = latest_attempt.exam_paper.title
-        
+    for attempt in all_attempts:
         # Get total questions from the exam paper
-        total_questions = latest_attempt.exam_paper.questions.count()
+        total_questions = attempt.exam_paper.questions.count()
         
         # Get correct MCQ answers count
-        from .models import StudentAnswer
         correct_answers = StudentAnswer.objects.filter(
-            attempt=latest_attempt,
+            attempt=attempt,
             is_correct=True
         ).count()
         
-        # Get percentage from attempt or result
+        # Get percentage and grade from attempt or result
+        percentage_score = 0
+        grade = 'N/A'
+        result_published = False
+        
         try:
-            result = Result.objects.get(attempt=latest_attempt)
+            result = Result.objects.get(attempt=attempt)
             percentage_score = result.percentage
+            grade = result.grade
+            result_published = result.published
         except Result.DoesNotExist:
-            percentage_score = latest_attempt.percentage if latest_attempt.percentage else 0
-    else:
-        # OLD SYSTEM: Fallback to old Exam model
-        exam = student.exams.first()
-        if exam:
-            exam_name = exam.exam_name
-            total_questions = exam.total_questions if exam.total_questions else 0
-            correct_answers = exam.correct_answers if exam.correct_answers else 0
-            percentage_score = exam.percentage_score if exam.percentage_score else 0
-
-    # Create a mock exam object to pass to template (for backward compatibility)
-    class ExamData:
-        pass
+            percentage_score = attempt.percentage if attempt.percentage else 0
+        
+        exam_history.append({
+            'exam_name': attempt.exam_paper.title,
+            'subject': attempt.exam_paper.subject,
+            'exam_date': attempt.exam_paper.exam_date,
+            'submitted_at': attempt.submitted_at,
+            'total_questions': total_questions,
+            'correct_answers': correct_answers,
+            'total_marks': attempt.exam_paper.total_marks,
+            'marks_obtained': attempt.total_marks_obtained or 0,
+            'percentage_score': percentage_score,
+            'grade': grade,
+            'status': attempt.status,
+            'result_published': result_published,
+            'duration_minutes': attempt.exam_paper.duration_minutes,
+        })
     
-    exam_obj = ExamData()
-    exam_obj.exam_name = exam_name
-    exam_obj.total_questions = total_questions
-    exam_obj.correct_answers = correct_answers
-    exam_obj.percentage_score = percentage_score
+    # OLD SYSTEM: Fallback to old Exam model if no new attempts
+    if not exam_history:
+        old_exams = Exam.objects.filter(student=student).order_by('-timestamp')
+        for exam in old_exams:
+            exam_history.append({
+                'exam_name': exam.exam_name,
+                'subject': 'N/A',
+                'exam_date': exam.timestamp,
+                'submitted_at': exam.timestamp,
+                'total_questions': exam.total_questions if exam.total_questions else 0,
+                'correct_answers': exam.correct_answers if exam.correct_answers else 0,
+                'total_marks': exam.total_questions if exam.total_questions else 0,
+                'marks_obtained': exam.correct_answers if exam.correct_answers else 0,
+                'percentage_score': exam.percentage_score if exam.percentage_score else 0,
+                'grade': 'N/A',
+                'status': exam.status,
+                'result_published': True,
+                'duration_minutes': 'N/A',
+            })
+
+    # Calculate overall statistics
+    total_exams_taken = len(exam_history)
+    total_exams_passed = sum(1 for exam in exam_history if exam['percentage_score'] >= 40)
+    average_score = sum(exam['percentage_score'] for exam in exam_history) / total_exams_taken if total_exams_taken > 0 else 0
 
     # Get cheating events
     cheating_events = CheatingEvent.objects.filter(student=student)
@@ -963,19 +1008,16 @@ def download_report(request, student_id):
     # Context
     context = {
         "student": student,
-        "exam": exam_obj,
+        "exam_history": exam_history,
+        "total_exams_taken": total_exams_taken,
+        "total_exams_passed": total_exams_passed,
+        "average_score": round(average_score, 2),
         "detected_objects": detected_objects_str,
-        "score": percentage_score,
         "total_tab_switch_count": total_tab_switch_count,
-
-        "correct_answers": correct_answers,
-        "total_questions": total_questions,
-
         "cheating_status": any(
             event.event_type in ['object_detected', 'multiple_persons', 'tab_switch']
             for event in cheating_events
         ),
-
         "cheating_images": cheating_images_data,
         "audio_urls": audio_urls,
         "cheating_events": cheating_events,
@@ -987,7 +1029,7 @@ def download_report(request, student_id):
 
     # PDF response
     response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="report_{student.id}.pdf"'
+    response["Content-Disposition"] = f'attachment; filename="report_{student.name}_{student.id}_all_exams.pdf"'
 
     # Generate PDF
     pisa_status = pisa.CreatePDF(html, dest=response)

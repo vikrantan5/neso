@@ -1,11 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student report · {{ student.name }} · FuturProctor</title>
+  <title>Student Report · {{ student.name }} · FuturProctor</title>
   <!-- Font Awesome 6 (free) for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
@@ -17,14 +16,13 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background: #f5f0eb;  /* light beige background */
+      background: #f5f0eb;
       min-height: 100vh;
       padding: 32px 24px;
     }
 
-    /* main container – soft, elevated card */
     .report-card {
-      max-width: 1300px;
+      max-width: 1400px;
       margin: 0 auto;
       background: #ffffff;
       border-radius: 42px;
@@ -33,7 +31,6 @@
       border: 1px solid #f5e7dc;
     }
 
-    /* header with download button */
     .report-header {
       display: flex;
       justify-content: space-between;
@@ -57,12 +54,12 @@
 
     .report-header h2 i {
       background: none;
-      -webkit-text-fill-color: #e9b6b1; /* rose pink */
+      -webkit-text-fill-color: #e9b6b1;
       font-size: 36px;
     }
 
     .btn-download {
-      background: #e9b6b1; /* rose pink */
+      background: #e9b6b1;
       color: #2e2e2e;
       padding: 14px 32px;
       border-radius: 50px;
@@ -75,10 +72,7 @@
       transition: all 0.2s;
       box-shadow: 0 8px 16px -8px #e9b6b1;
       border: none;
-    }
-
-    .btn-download i {
-      color: #2e2e2e;
+      cursor: pointer;
     }
 
     .btn-download:hover {
@@ -87,116 +81,204 @@
       box-shadow: 0 16px 22px -10px #dd9f99;
     }
 
-    /* card styles */
     .detail-card {
       background: #fefcf9;
       border: 2px solid #f0e3d8;
       border-radius: 32px;
       margin-bottom: 32px;
       overflow: hidden;
+      page-break-inside: avoid; /* Prevents cards from splitting across PDF pages */
     }
 
     .card-header-custom {
-      background: #fff5ef;  /* very light rose */
-      padding: 18px 28px;
-      border-bottom: 2px solid #f0e3d8;
+      background: #fff5ef;
+      padding: 20px 32px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
+      color: #4b3f34;
+      font-size: 20px;
+      font-weight: 600;
+      border-bottom: 2px solid #f0e3d8;
     }
 
     .card-header-custom i {
-      font-size: 26px;
-      color: #e9b6b1;
-      background: white;
-      padding: 8px;
-      border-radius: 20px;
-    }
-
-    .card-header-custom span {
-      font-size: 20px;
-      font-weight: 600;
-      color: #4b3f34;
+      color: #6d8f9f;
+      font-size: 24px;
     }
 
     .card-body-custom {
-      padding: 28px;
+      padding: 32px;
     }
 
-    /* student details row */
     .student-detail-row {
       display: flex;
+      gap: 24px;
       align-items: center;
-      gap: 32px;
-      flex-wrap: wrap;
     }
 
     .student-image {
       width: 130px;
       height: 130px;
-      object-fit: cover;
       border-radius: 30px;
-      box-shadow: 0 10px 18px -6px rgba(0, 0, 0, 0.1);
-      border: 4px solid white;
+      object-fit: cover; /* Maintains aspect ratio */
+      object-position: center; /* Centers the image */
+      box-shadow: 0 10px 20px -10px rgba(0,0,0,0.15);
+      border: 3px solid #f5e7dc;
+      image-rendering: -webkit-optimize-contrast; /* Improves image quality */
+      image-rendering: crisp-edges; /* Better for PDF conversion */
     }
 
     .student-info h4 {
-      font-size: 26px;
-      font-weight: 600;
+      font-size: 28px;
       color: #4b3f34;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     .student-info p {
       color: #6d5d4e;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .student-info p i {
-      color: #6d8f9f; /* powder blue */
-      width: 24px;
-    }
-
-    /* exam stats grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 20px;
-      margin-top: 10px;
-    }
-
-    .stat-item {
-      background: #fcf8f4;
-      border-radius: 24px;
-      padding: 18px 16px;
-      text-align: center;
-      border: 1px solid #efe4d8;
-    }
-
-    .stat-label {
-      font-size: 14px;
-      color: #9b8b7a;
+      font-size: 16px;
       margin-bottom: 8px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
+      gap: 10px;
     }
 
-    .stat-label i {
+    .student-info i {
+      color: #6d8f9f;
+      width: 20px;
+    }
+
+    /* Overall Statistics */
+    .overall-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .overall-stat-item {
+      background: linear-gradient(135deg, #6d8f9f 0%, #9fb7c7 100%);
+      padding: 24px;
+      border-radius: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    .overall-stat-label {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .overall-stat-value {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    /* Exam History Table */
+    .exam-history-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 12px;
+      margin-top: 16px;
+    }
+
+    .exam-history-table thead {
+      background: #f0e7de;
+    }
+
+    .exam-history-table th {
+      padding: 16px;
+      text-align: left;
+      color: #4b3f34;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .exam-history-table th:first-child {
+      border-radius: 12px 0 0 12px;
+    }
+
+    .exam-history-table th:last-child {
+      border-radius: 0 12px 12px 0;
+    }
+
+    .exam-history-table tbody tr {
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+
+    .exam-history-table tbody tr:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .exam-history-table td {
+      padding: 20px 16px;
+      color: #4b3f34;
+      font-size: 15px;
+    }
+
+    .exam-history-table td:first-child {
+      border-radius: 12px 0 0 12px;
+    }
+
+    .exam-history-table td:last-child {
+      border-radius: 0 12px 12px 0;
+    }
+
+    .exam-title {
+      font-weight: 600;
+      color: #2e2e2e;
+      font-size: 16px;
+    }
+
+    .exam-subject {
+      color: #6d8f9f;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .grade-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .grade-a-plus { background: #d4edda; color: #155724; }
+    .grade-a { background: #d1ecf1; color: #0c5460; }
+    .grade-b-plus { background: #fff3cd; color: #856404; }
+    .grade-b { background: #fff3cd; color: #856404; }
+    .grade-c-plus { background: #f8d7da; color: #721c24; }
+    .grade-c { background: #f8d7da; color: #721c24; }
+    .grade-f { background: #f8d7da; color: #721c24; font-weight: 700; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-evaluated { background: #d4edda; color: #155724; }
+    .status-submitted { background: #fff3cd; color: #856404; }
+    .status-ongoing { background: #d1ecf1; color: #0c5460; }
+
+    .percentage-display {
+      font-size: 18px;
+      font-weight: 700;
       color: #6d8f9f;
     }
 
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: #4b3f34;
-    }
-
-    /* cheating summary badges */
     .cheating-badge {
       display: inline-flex;
       align-items: center;
@@ -230,11 +312,11 @@
       gap: 6px;
     }
 
-    /* image gallery */
+    /* Enhanced Image Grid for PDF */
     .image-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(3, 1fr); /* Fixed 3 columns for PDF consistency */
+      gap: 20px;
       margin-top: 12px;
     }
 
@@ -243,16 +325,32 @@
       border-radius: 24px;
       padding: 16px;
       border: 1px solid #efe4d8;
+      page-break-inside: avoid; /* Prevents image splitting */
+    }
+
+    .image-container {
+      position: relative;
+      width: 100%;
+      padding-top: 75%; /* 4:3 Aspect Ratio */
+      overflow: hidden;
+      border-radius: 20px;
+      background: #f0e7de; /* Placeholder background */
     }
 
     .zoomable-image {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 20px;
+      height: 100%;
+      object-fit: contain; /* Ensures full image visible without distortion */
+      object-position: center;
       cursor: pointer;
       transition: transform 0.2s;
       box-shadow: 0 8px 12px -8px rgba(0,0,0,0.15);
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      background: #ffffff; /* White background for transparent images */
     }
 
     .zoomable-image:hover {
@@ -273,12 +371,12 @@
       color: #6d8f9f;
     }
 
-    /* audio player */
     .audio-player {
       width: 100%;
       border-radius: 40px;
       background: #f0e7de;
       border: 1px solid #d9c8b8;
+      margin-bottom: 16px;
     }
 
     audio::-webkit-media-controls-panel {
@@ -299,9 +397,9 @@
       font-size: 40px;
       color: #e9b6b1;
       margin-bottom: 12px;
+      display: block;
     }
 
-    /* footer */
     .footer-note {
       margin-top: 40px;
       text-align: right;
@@ -313,69 +411,240 @@
       justify-content: space-between;
       align-items: center;
     }
+
+    /* Loading state for images - without animation to avoid PDF parser issues */
+    .image-container.loading::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      border: 3px solid #f0e7de;
+      border-top-color: #6d8f9f;
+      border-radius: 50%;
+    }
+
+    /* PDF-specific optimizations */
+    @media print {
+      body { 
+        background: white; 
+        padding: 0.5in;
+      }
+      .report-card { 
+        box-shadow: none; 
+        border: 1px solid #ddd;
+        padding: 20px;
+      }
+      .btn-download { 
+        display: none; 
+      }
+      .zoomable-image {
+        cursor: default;
+      }
+      .zoomable-image:hover {
+        transform: none;
+        border: none;
+      }
+      .exam-history-table tbody tr:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      /* Ensure images print at high quality */
+      img {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      /* Force background colors to print */
+      .overall-stat-item,
+      .grade-badge,
+      .status-badge,
+      .cheating-badge {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .image-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .image-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
 <div class="report-card">
-  <!-- header with download -->
+  <!-- Header with download -->
   <div class="report-header">
-    <h2><i class="fas fa-file-pdf"></i> Student examination report</h2>
-    <a href="{% url 'download_report' student.id %}" class="btn-download"><i class="fas fa-download"></i> Download report</a>
+    <h2><i class="fas fa-file-pdf"></i> Complete Student Examination Report</h2>
+    <a href="{% url 'download_report' student.id %}" class="btn-download">
+      <i class="fas fa-download"></i> Download Full Report
+    </a>
   </div>
 
-  <!-- student details card -->
+  <!-- Student details card -->
   <div class="detail-card">
     <div class="card-header-custom">
       <i class="fas fa-user-graduate"></i>
-      <span>Student details</span>
+      <span>Student Details</span>
     </div>
     <div class="card-body-custom">
       <div class="student-detail-row">
         {% if student.photo %}
-          <img src="{{ student.photo.url }}" alt="{{ student.name }}" class="student-image">
+          <img src="{{ student.photo.url }}" alt="{{ student.name }}" class="student-image" loading="lazy">
         {% else %}
-          <div style="width:130px; height:130px; background:#f0e7de; border-radius:30px; display:flex; align-items:center; justify-content:center;"><i class="fas fa-user fa-3x" style="color:#6d8f9f;"></i></div>
+          <div style="width:130px; height:130px; background:#f0e7de; border-radius:30px; display:flex; align-items:center; justify-content:center;">
+            <i class="fas fa-user fa-3x" style="color:#6d8f9f;"></i>
+          </div>
         {% endif %}
         <div class="student-info">
           <h4>{{ student.name }}</h4>
           <p><i class="fas fa-envelope"></i> {{ student.email }}</p>
           <p><i class="fas fa-map-pin"></i> {{ student.address|default:"Not provided" }}</p>
+          <p><i class="fas fa-id-badge"></i> Student ID: {{ student.id }}</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- exam details card -->
+  <!-- Overall Performance Statistics -->
   <div class="detail-card">
     <div class="card-header-custom">
-      <i class="fas fa-pencil-alt"></i>
-      <span>Exam details</span>
+      <i class="fas fa-chart-line"></i>
+      <span>Overall Performance Statistics</span>
     </div>
     <div class="card-body-custom">
-      <div class="stats-grid">
-        <div class="stat-item"><div class="stat-label"><i class="fas fa-book-open"></i> Exam</div><div class="stat-value" style="font-size:22px;">{{ exam.exam_name|default:"Not Available" }}</div></div>
-        <div class="stat-item"><div class="stat-label"><i class="fas fa-list-ol"></i> Questions</div><div class="stat-value">{{ total_questions|default:"0" }}</div></div>
-        <div class="stat-item"><div class="stat-label"><i class="fas fa-check-circle"></i> Correct</div><div class="stat-value">{{ correct_answers|default:"0" }}</div></div>
-        <div class="stat-item"><div class="stat-label"><i class="fas fa-percent"></i> Score</div><div class="stat-value">{% if exam.percentage_score %}{{ exam.percentage_score }}{% else %}0{% endif %}%</div></div>
+      <div class="overall-stats">
+        <div class="overall-stat-item">
+          <div class="overall-stat-label"><i class="fas fa-clipboard-list"></i> Total Exams Taken</div>
+          <div class="overall-stat-value">{{ total_exams_taken }}</div>
+        </div>
+        <div class="overall-stat-item">
+          <div class="overall-stat-label"><i class="fas fa-check-circle"></i> Exams Passed</div>
+          <div class="overall-stat-value">{{ total_exams_passed }}</div>
+        </div>
+        <div class="overall-stat-item">
+          <div class="overall-stat-label"><i class="fas fa-percent"></i> Average Score</div>
+          <div class="overall-stat-value">{{ average_score }}%</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- cheating summary card -->
+  <!-- Complete Exam History -->
+  <div class="detail-card">
+    <div class="card-header-custom">
+      <i class="fas fa-history"></i>
+      <span>Complete Exam History ({{ total_exams_taken }} Exam{% if total_exams_taken != 1 %}s{% endif %})</span>
+    </div>
+    <div class="card-body-custom">
+      {% if exam_history %}
+        <table class="exam-history-table">
+          <thead>
+            <tr>
+              <th>Exam Details</th>
+              <th>Date Taken</th>
+              <th>Questions</th>
+              <th>Score</th>
+              <th>Percentage</th>
+              <th>Grade</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for exam in exam_history %}
+            <tr>
+              <td>
+                <div class="exam-title">{{ exam.exam_name }}</div>
+                <div class="exam-subject">{{ exam.subject }}</div>
+              </td>
+              <td>
+                {% if exam.submitted_at %}
+                  {{ exam.submitted_at|date:"M d, Y" }}<br>
+                  <small style="color:#999;">{{ exam.submitted_at|date:"h:i A" }}</small>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ exam.correct_answers }}</strong> / {{ exam.total_questions }}
+              </td>
+              <td>
+                <strong>{{ exam.marks_obtained }}</strong> / {{ exam.total_marks }}
+              </td>
+              <td>
+                <span class="percentage-display">{{ exam.percentage_score }}%</span>
+              </td>
+              <td>
+                {% if exam.grade == 'A+' %}
+                  <span class="grade-badge grade-a-plus">{{ exam.grade }}</span>
+                {% elif exam.grade == 'A' %}
+                  <span class="grade-badge grade-a">{{ exam.grade }}</span>
+                {% elif exam.grade == 'B+' or exam.grade == 'B' %}
+                  <span class="grade-badge grade-b-plus">{{ exam.grade }}</span>
+                {% elif exam.grade == 'C+' or exam.grade == 'C' %}
+                  <span class="grade-badge grade-c-plus">{{ exam.grade }}</span>
+                {% elif exam.grade == 'F' %}
+                  <span class="grade-badge grade-f">{{ exam.grade }}</span>
+                {% else %}
+                  <span class="grade-badge" style="background:#e0e0e0; color:#666;">{{ exam.grade }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if exam.status == 'evaluated' %}
+                  <span class="status-badge status-evaluated">
+                    <i class="fas fa-check"></i> Evaluated
+                  </span>
+                {% elif exam.status == 'submitted' %}
+                  <span class="status-badge status-submitted">
+                    <i class="fas fa-clock"></i> Submitted
+                  </span>
+                {% elif exam.status == 'ongoing' %}
+                  <span class="status-badge status-ongoing">
+                    <i class="fas fa-spinner"></i> Ongoing
+                  </span>
+                {% else %}
+                  <span class="status-badge" style="background:#f0f0f0; color:#666;">
+                    {{ exam.status|title }}
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-message">
+          <i class="fas fa-clipboard-list"></i>
+          <p>No exam history available for this student.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Proctoring Summary -->
   <div class="detail-card">
     <div class="card-header-custom">
       <i class="fas fa-shield-alt"></i>
-      <span>Cheating summary</span>
+      <span>Proctoring Summary (All Exams)</span>
     </div>
     <div class="card-body-custom">
       <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin-bottom: 16px;">
         <div class="{% if cheating_status %}cheating-yes{% else %}cheating-no{% endif %} cheating-badge">
           <i class="fas {% if cheating_status %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %}"></i>
-          {% if cheating_status %}Cheating detected{% else %}No cheating detected{% endif %}
+          {% if cheating_status %}Cheating Detected{% else %}No Cheating Detected{% endif %}
         </div>
         <div>
           <i class="fas fa-window-restore" style="color:#6d8f9f;"></i>
-          Tab switches:
+          Tab Switches:
           {% if total_tab_switch_count >= 1 %}
             <span class="tab-warning"><i class="fas fa-exclamation-circle"></i> {{ total_tab_switch_count }} (suspicious)</span>
           {% else %}
@@ -384,7 +653,7 @@
         </div>
       </div>
       <div>
-        <strong style="color:#4b3f34;"><i class="fas fa-cube"></i> Objects detected:</strong>
+        <strong style="color:#4b3f34;"><i class="fas fa-cube"></i> Objects Detected:</strong>
         {% if detected_objects != "No objects detected" %}
           <span style="background:#f0e7de; padding:6px 18px; border-radius:40px; margin-left:8px;">{{ detected_objects }}</span>
         {% else %}
@@ -394,83 +663,93 @@
     </div>
   </div>
 
-  <!-- detected images card -->
+  <!-- Detected Images -->
+  {% if cheating_images %}
   <div class="detail-card">
     <div class="card-header-custom">
       <i class="fas fa-camera"></i>
-      <span>Detected images</span>
+      <span>Detected Suspicious Images ({{ cheating_images|length }})</span>
     </div>
     <div class="card-body-custom">
-      {% if cheating_images %}
-        <table width="100%" cellspacing="10">
-<tr>
-
-{% for img in cheating_images %}
-
-<td width="33%" style="vertical-align:top;">
-  <div class="image-item">
-
-    <img src="{{ img.url }}" width="250" height="160"
-         style="border-radius:12px; object-fit:cover;">
-
-    <div class="image-meta">
-      <i class="fas fa-tag"></i> {{ img.event_type }}
-    </div>
-
-    <div class="image-meta">
-      <i class="fas fa-clock"></i> {{ img.timestamp }}
-    </div>
-
-  </div>
-</td>
-
-{% if forloop.counter|divisibleby:3 %}
-</tr><tr>
-{% endif %}
-
-{% endfor %}
-
-</tr>
-</table>
-      {% else %}
-        <div class="empty-message">
-          <i class="fas fa-images"></i>
-          <p>No cheating images detected.</p>
+      <div class="image-grid">
+        {% for img in cheating_images %}
+        <div class="image-item">
+          <div class="image-container">
+            <img src="{{ img.url }}" alt="Cheating Evidence" class="zoomable-image" onclick="window.open(this.src, '_blank')" loading="lazy">
+          </div>
+          <div class="image-meta">
+            <i class="fas fa-tag"></i>
+            <span>{{ img.event_type|default:"Suspicious Activity" }}</span>
+          </div>
+          <div class="image-meta">
+            <i class="fas fa-clock"></i>
+            <span>{{ img.timestamp|date:"M d, Y H:i" }}</span>
+          </div>
         </div>
-      {% endif %}
+        {% endfor %}
+      </div>
     </div>
   </div>
+  {% endif %}
 
-  <!-- detected audio card -->
+  <!-- Detected Audio -->
+  {% if audio_urls %}
   <div class="detail-card">
     <div class="card-header-custom">
-      <i class="fas fa-microphone-alt"></i>
-      <span>Detected audio</span>
+      <i class="fas fa-microphone"></i>
+      <span>Detected Audio Events ({{ audio_urls|length }})</span>
     </div>
     <div class="card-body-custom">
-      {% if audio_urls %}
-        <div style="display: flex; flex-direction: column; gap: 16px;">
-          {% for audio in audio_urls %}
-            <audio controls class="audio-player">
-              <source src="{{ audio }}" type="audio/wav">
-              Your browser does not support the audio element.
-            </audio>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="empty-message">
-          <i class="fas fa-volume-off"></i>
-          <p>No cheating audio detected.</p>
-        </div>
-      {% endif %}
+      {% for audio_url in audio_urls %}
+        <audio controls class="audio-player" preload="none">
+          <source src="{{ audio_url }}" type="audio/wav">
+          Your browser does not support the audio element.
+        </audio>
+      {% endfor %}
     </div>
   </div>
+  {% endif %}
 
-  <!-- footer note -->
+  <!-- Footer -->
   <div class="footer-note">
-    <!-- <span><i class="fas fa-palette"></i> powder blue · rose pink · light beige · light brown · grey</span> -->
-    <span><i class="fas fa-graduation-cap" style="color:#e9b6b1;"></i> FuturProctor</span>
+    <span>Generated by FuturProctor AI Proctoring System</span>
+    <span>Report Date: {% now "M d, Y H:i" %}</span>
   </div>
 </div>
+
+<script>
+// Simplified JavaScript without complex animations
+document.addEventListener('DOMContentLoaded', function() {
+  const images = document.querySelectorAll('.zoomable-image');
+  
+  images.forEach(img => {
+    // Add loading state
+    const container = img.closest('.image-container');
+    if (container) {
+      container.classList.add('loading');
+    }
+    
+    // Handle load
+    img.addEventListener('load', function() {
+      if (container) {
+        container.classList.remove('loading');
+      }
+    });
+    
+    // Handle error
+    img.addEventListener('error', function() {
+      if (container) {
+        container.classList.remove('loading');
+        // Show error placeholder
+        this.style.display = 'none';
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #f0e7de; color: #6d5d4e;';
+        errorDiv.innerHTML = '<i class="fas fa-image fa-2x"></i>';
+        container.appendChild(errorDiv);
+      }
+    });
+  });
+});
+</script>
 </body>
 </html>
