@@ -10,6 +10,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
+# Import Student model for bulk email sending
+from .models import Student
+
 def send_result_published_email(student, result, attempt):
     """
     Send email notification when exam result is published
